@@ -1,13 +1,44 @@
 import React from 'react'
-
 export const Note = (props) => {
 
   const deleteItem=()=>{
-    props.onDelete(props.id);
+  
+      fetch("http://localhost:3005/todos", {
+        method: "GET",
+      })
+        .then((resp) => resp.json())
+        .then((data) => {
+          if (data.length > 0) {
+            
+              props.onDelete(data[props.id].id);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+    
+   
   }
 
   const editNote=()=>{
-    props.onEdit(props.id);
+
+    fetch("http://localhost:3005/todos", {
+        method: "GET",
+      })
+        .then((resp) => resp.json())
+        .then((data) => {
+          if (data.length > 0) {
+            
+              props.onEdit(data[props.id].id);
+          }
+        })
+        .catch((error) => {
+          console.error("Error:", error);
+        });
+
+   
+
+
   }
   return (
     

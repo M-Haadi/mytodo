@@ -1,17 +1,19 @@
 {
   "name": "todowithcomponents",
-  "homepage": "http://M-Haadi.github.io/listtodo",
+  "homepage": "http://M-Haadi.github.io/mytodo",
   "private": true,
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predeploy": "npm run build",
-    "deploy": "gh-pages -d build",
     "dev": "vite",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "startServer":"json-server -p 3005 --watch src/todos.json"
   },
   "dependencies": {
+    "json-server": "^0.17.3",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

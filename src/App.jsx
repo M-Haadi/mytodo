@@ -1,45 +1,93 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Note from "./Note";
 import InputContainer from "./InputContainer";
 const App = () => {
-  let ExistingItems = JSON.parse(localStorage.getItem("mynotes"));
 
   const [inputValue, setInputvalue] = useState("");
-  const [listItems, setListItems] = useState(ExistingItems || []);
-  const [edit_add_state, setedit_add_state]=useState('addState');
-  const[id, setId]=useState(null);
+  const [listItems, setListItems] = useState([]);
+  const [edit_add_state, setedit_add_state] = useState("addState");
+  const [id, setId] = useState(null);
 
   const inputFieldChanged = (e) => {
     setInputvalue(e.target.value);
-    return(inputValue)
+
   };
 
-  const addItem = () => {
-
-    if(edit_add_state=='editState'){
-      setListItems((oldItems) => {
-        oldItems[id]=inputValue;
-        localStorage.setItem(
-          "mynotes",
-          JSON.stringify([...oldItems])
-        );
-        setedit_add_state('addState');
-        setInputvalue("");
-        return [...oldItems];
-
+  const getAllData = () => {
+    fetch("http://localhost:3005/todos", {
+      method: "GET",
+    })
+      .then((resp) => resp.json())
+      .then((data) => {
+        if (data.length > 0) {
+          setListItems(data);
+          
+        }
+      })
+      .catch((error) => {
+        console.error("Error:", error);
       });
+  };
+  const getDatabyId = async (id) => {
+    await fetch(`http://localhost:3005/todos/${id}`, {
+      method: "GET",
+    })
+      .then((resp) => resp.json())
+      .then((data) => {
+        setInputvalue(data.todoData);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
+  };
 
+  const updateData=async(newData)=>{
+
+    try {
+      await fetch(`http://localhost:3005/todos/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+    } catch (error) {
+      console.log("Error:", error);
     }
 
-    else if(edit_add_state=='addState'){    setListItems((oldItems) => {
-      localStorage.setItem(
-        "mynotes",
-        JSON.stringify([...oldItems, inputValue])
-      );
-      return [...oldItems, inputValue];
-    });
-    setInputvalue(""); }
+getAllData()
 
+  }
+  useEffect(() => {
+    getAllData();
+  }, []);
+
+  async function createData(newData) {
+    try {
+      await fetch("http://localhost:3005/todos", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newData),
+      });
+    } catch (error) {
+      console.log("Error:", error);
+    }
+
+  }
+
+  const addItem = async () => {
+    if (edit_add_state == "editState") {
+      let todoObj={todoData:inputValue}
+          updateData(todoObj)
+    } else if (edit_add_state == "addState") {
+      let todoObj = { todoData: inputValue };
+      createData(todoObj);
+      setInputvalue("");
+      getAllData()
+    }
+ 
   };
 
   const addItemOnKeyUp = (e) => {
@@ -56,16 +104,25 @@ const App = () => {
   };
 
   const deleteItem = (index) => {
-    setListItems((oldItems) => {
-      const newItems = oldItems.filter((item, i) => i !== index);
-      localStorage.setItem("mynotes", JSON.stringify(newItems));
-      return newItems;
-    });
+
+    fetch(`http://localhost:3005/todos/${index}`, {
+    method: "DELETE",
+  })
+    .then((response) => {
+      if (response.ok) {
+        console.log("Data deleted successfully");
+        return;
+      }
+      throw new Error("Data deletion failed");
+    })
+    .catch((error) => console.error("Error:", error));
+    getAllData()
   };
-    const editItem = (index) => {
-        setedit_add_state('editState');
-        setInputvalue(listItems[index]);
-        setId(index);
+  const editItem = (index) => {
+    setedit_add_state("editState");
+    setId(index);
+    getDatabyId(index);
+    
   };
 
   return (
@@ -73,12 +130,12 @@ const App = () => {
       <h1>React Todo List</h1>
       <div className="container">
         <div className="mainBox">
-         <InputContainer
-          ChangeInput={inputFieldChanged}
-          keyUp={addItemOnKeyUp}
-          value={inputValue}
-          additem={addItem}
-         />
+          <InputContainer
+            ChangeInput={inputFieldChanged}
+            keyUp={addItemOnKeyUp}
+            value={inputValue}
+            additem={addItem}
+          />
 
           <div className="notes-container">
             {listItems.map((items, index) => {
@@ -87,19 +144,13 @@ const App = () => {
                   <Note
                     key={index}
                     id={index}
-                    text={items}
-                    onDelete={
-                      deleteItem
-                     }
-                    onEdit={
-                      editItem
-                    
-                    }
+                    text={items.todoData}
+                    onDelete={deleteItem}
+                    onEdit={editItem}
                   />
                 </>
               );
             })}
-
           </div>
         </div>
       </div>
@@ -107,5 +158,5 @@ const App = () => {
       {/* <div className="footer">m_hadi © 2023</div> */}
     </>
   );
-}
+};
 export default App;
